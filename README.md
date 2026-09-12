@@ -20,7 +20,7 @@ The planned learning sequence is:
 
 **Predict → Schedule → Observe → Explain → Compare**
 
-Prediction and unsafe scheduling are implemented, including state inspection, Back, retained future, alternate scheduling, and Reset run. Explain and Compare remain deferred.
+Prediction, unsafe scheduling, and violation analysis are implemented. The lab includes state inspection, Back, retained future, alternate scheduling, Reset run, a saved first-violation trace, and a causal checkpoint. Compare remains deferred.
 
 ## Why this exists
 
@@ -37,7 +37,7 @@ Concurrency beginners often find it difficult to reason about interleavings and 
 
 ## Current Status
 
-- **Prototype:** Pre-alpha / Predict + Unsafe Interactive Lab
+- **Prototype:** Pre-alpha / Predict + Unsafe Lab + Violation Analysis
 - **Human Validation:** Deferred / not completed
 - **Learning Effectiveness:** Open
 
@@ -71,12 +71,14 @@ the same browser tests alongside typecheck, lint, formatting, unit tests, and bu
 
 ## Implementation boundaries
 
-`src/application/learning-session/` holds the committed semantic prediction and
-the existing unsafe session. React owns the form draft and renders derived views.
-Scheduling, Back, retained future and Reset delegate to `unsafe-session`; domain
-transitions and invariants remain in `src/domain/unsafe-reservation/`.
-Reset run preserves the prediction. Invariant violations remain in the unsafe lab;
-no later teaching flow is implemented yet.
+`src/application/learning-session/` holds the committed prediction, unsafe
+session, first saved violating scheduling trace, checkpoint answer, and replay-derived
+causal analysis. React owns form drafts and renders derived views. Scheduling,
+Back, retained future and Reset delegate to `unsafe-session`; domain transitions
+and invariants remain in `src/domain/unsafe-reservation/`. Reset preserves the
+prediction, saved violation evidence, and latest checkpoint answer. Analysis is an
+explicit learner action after a real violation. Synchronization and Compare are not
+implemented.
 
 ## Contributing
 

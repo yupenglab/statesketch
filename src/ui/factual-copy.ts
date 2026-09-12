@@ -17,6 +17,10 @@ export function formatAnnouncement(result: LearningInteraction): string {
       return `Returned to step ${result.currentStep}. Invariant ${result.invariant === 'HOLDS' ? 'holds' : 'violated'}.`;
     case 'RESET_RUN':
       return 'Run reset. No execution steps have run. Your prediction is unchanged.';
+    case 'ENTER_VIOLATION_ANALYSIS':
+      return 'Violation analysis opened. The saved execution evidence is ready to review.';
+    case 'SUBMIT_CHECKPOINT':
+      return result.checkpointFeedback ?? '';
     case 'SCHEDULE_THREAD': {
       const branch =
         result.branchPoint === null

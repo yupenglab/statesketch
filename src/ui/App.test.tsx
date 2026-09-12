@@ -43,6 +43,17 @@ function thread(id: 'A' | 'B') {
 function shared() {
   return within(screen.getByRole('region', { name: 'Current shared state' }));
 }
+function violate(order: 'A_FIRST' | 'B_FIRST' = 'A_FIRST') {
+  const first = order === 'A_FIRST' ? 'A' : 'B';
+  const second = order === 'A_FIRST' ? 'B' : 'A';
+  run(first);
+  run(second);
+  run(first);
+  run(second);
+}
+function analyze() {
+  fireEvent.click(screen.getByRole('button', { name: 'Analyze this result' }));
+}
 
 describe('prediction', () => {
   it('shows the frozen prompt and three named native options, requiring a choice', () => {
@@ -317,5 +328,156 @@ describe('history and accessibility', () => {
         }),
       ).toBeVisible();
     }
+  });
+});
+
+describe('violation analysis and causal checkpoint', () => {
+  it('offers analysis only after a real violation and enters it explicitly', () => {
+    start();
+    run('A');
+    run('A');
+    run('B');
+    expect(
+      screen.queryByRole('button', { name: 'Analyze this result' }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Reset run' }));
+    violate();
+    expect(
+      screen.getByRole('heading', { name: 'Unsafe exploration' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Analyze this result' }),
+    ).toBeVisible();
+
+    analyze();
+    expect(
+      screen.getByRole('heading', { name: 'Violation analysis' }),
+    ).toHaveFocus();
+    expect(
+      screen.queryByRole('heading', { name: 'Unsafe exploration' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders ordered A-first evidence and the stale observation precisely', () => {
+    start();
+    violate('A_FIRST');
+    analyze();
+
+    const trace = within(
+      screen.getByRole('list', { name: 'Saved violating execution' }),
+    );
+    const steps = trace.getAllByRole('listitem');
+    expect(steps).toHaveLength(4);
+    expect(steps[0]).toHaveTextContent('Thread A — CHECK');
+    expect(steps[0]).toHaveTextContent('Successful CHECK · observed 1 seat');
+    expect(steps[1]).toHaveTextContent('Thread B — CHECK');
+    expect(steps[2]).toHaveTextContent('Thread A — COMMIT');
+    expect(steps[2]).toHaveTextContent('Shared seats: 1 → 0');
+    expect(steps[3]).toHaveTextContent('Thread B — COMMIT');
+    expect(steps[3]).toHaveTextContent('Earlier observation retained: 1 seat');
+    expect(steps[3]).toHaveTextContent('Invariant violated here');
+    expect(
+      screen.getByText('Steps 1 and 2, before the first COMMIT'),
+    ).toBeVisible();
+    expect(screen.getByText('Thread A, step 3: 1 → 0')).toBeVisible();
+    expect(screen.getByText('Thread B, step 4: 0 → -1')).toBeVisible();
+    const staleEvidence = screen.getByRole('heading', {
+      name: 'Earlier observation versus shared state',
+    }).nextElementSibling;
+    expect(staleEvidence).toHaveTextContent(
+      "Thread B's earlier CHECK saw 1 seat and passed.",
+    );
+    expect(staleEvidence).toHaveTextContent(
+      "After Thread A committed, the shared value became 0, but Thread B's earlier observation remained the result its next COMMIT depended on.",
+    );
+  });
+
+  it('derives symmetric B-first evidence from the saved trace', () => {
+    start();
+    violate('B_FIRST');
+    analyze();
+
+    expect(screen.getByText('Thread B, step 3: 1 → 0')).toBeVisible();
+    expect(screen.getByText('Thread A, step 4: 0 → -1')).toBeVisible();
+    const staleEvidence = screen.getByRole('heading', {
+      name: 'Earlier observation versus shared state',
+    }).nextElementSibling;
+    expect(staleEvidence).toHaveTextContent(
+      "Thread A's earlier CHECK saw 1 seat and passed",
+    );
+    expect(staleEvidence).toHaveTextContent('After Thread B committed');
+  });
+
+  it.each([
+    [
+      'CHECK only',
+      'Protecting only CHECK still leaves the dependent COMMIT separated',
+    ],
+    [
+      'COMMIT only',
+      'Protecting only COMMIT is too late. Both threads could already have completed successful CHECKs',
+    ],
+    [
+      'CHECK → COMMIT',
+      'The successful CHECK and the COMMIT that depends on it must remain one uninterrupted logical region',
+    ],
+    ["I'm not sure", 'COMMIT is valid only because an earlier CHECK succeeded'],
+  ])('gives causal, non-scoring feedback for %s', (choice, message) => {
+    start();
+    violate();
+    analyze();
+    const submit = screen.getByRole('button', { name: 'Check my reasoning' });
+    expect(submit).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: choice }));
+    fireEvent.click(submit);
+    expect(
+      screen.getByRole('heading', { name: 'Feedback on your latest answer' }),
+    ).toBeVisible();
+    expect(
+      screen
+        .getByRole('heading', { name: 'Feedback on your latest answer' })
+        .closest('div'),
+    ).toHaveTextContent(message);
+    expect(document.body).not.toHaveTextContent(/score|points|incorrect/i);
+  });
+
+  it('keeps only latest checkpoint feedback and preserves saved evidence on Back and Reset', () => {
+    start('Evidence should survive.');
+    violate();
+    analyze();
+    const trace = screen.getByRole('list', {
+      name: 'Saved violating execution',
+    });
+    const savedEvidence = trace.textContent;
+
+    fireEvent.click(screen.getByRole('radio', { name: 'CHECK only' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check my reasoning' }));
+    const feedback = screen
+      .getByRole('heading', { name: 'Feedback on your latest answer' })
+      .closest('div');
+    expect(feedback).toHaveTextContent('Protecting only CHECK');
+    fireEvent.click(screen.getByRole('radio', { name: 'CHECK → COMMIT' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check my reasoning' }));
+    expect(feedback).not.toHaveTextContent('Protecting only CHECK');
+    expect(feedback).toHaveTextContent('Yes. The successful CHECK');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Back active run' }));
+    expect(trace).toHaveTextContent(savedEvidence ?? '');
+    fireEvent.click(screen.getByRole('button', { name: 'Reset current run' }));
+    expect(trace).toHaveTextContent(savedEvidence ?? '');
+    expect(feedback).toHaveTextContent('Yes. The successful CHECK');
+    expect(screen.getByRole('radio', { name: 'CHECK → COMMIT' })).toBeChecked();
+  });
+
+  it('keeps one polite live region and does not expose Slice 6 concepts', () => {
+    start();
+    violate();
+    analyze();
+    expect(screen.getAllByRole('status')).toHaveLength(1);
+    expect(document.querySelectorAll('[aria-live]')).toHaveLength(1);
+    expect(document.body).not.toHaveTextContent(
+      /mutex|lock|unlock|synchronized|blocked thread|compare|final insight/i,
+    );
   });
 });
