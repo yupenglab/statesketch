@@ -28,7 +28,12 @@ npm run lint
 npm run format:check
 npm test
 npm run build
+npm run test:e2e
 ```
+
+Install Chromium once with `npx playwright install --no-shell chromium` before running the
+browser tests. Unit/component tests run under Vitest; `e2e/` uses Playwright.
+Keep both layers inside the existing required `quality` check.
 
 ## License
 

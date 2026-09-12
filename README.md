@@ -6,7 +6,7 @@ StateSketch is an interactive mental-model lab for exploring concurrency interle
 
 ## Demo
 
-Prototype implementation is not available yet.
+Run the local development server to explore the pre-alpha Last Seat Reservation lab. No hosted demo is published yet.
 
 ## What is StateSketch?
 
@@ -20,7 +20,7 @@ The planned learning sequence is:
 
 **Predict → Schedule → Observe → Explain → Compare**
 
-This interaction has not been implemented.
+Prediction and unsafe scheduling are implemented, including state inspection, Back, retained future, alternate scheduling, and Reset run. Explain and Compare remain deferred.
 
 ## Why this exists
 
@@ -37,7 +37,7 @@ Concurrency beginners often find it difficult to reason about interleavings and 
 
 ## Current Status
 
-- **Prototype:** Pre-alpha / not yet implemented
+- **Prototype:** Pre-alpha / Predict + Unsafe Interactive Lab
 - **Human Validation:** Deferred / not completed
 - **Learning Effectiveness:** Open
 
@@ -58,9 +58,25 @@ npm run lint
 npm run format:check
 npm test
 npm run build
+npm run test:e2e
 ```
 
 Use `npm run format` to apply the project's formatting rules.
+
+Before the first browser test, run `npx playwright install --no-shell chromium`.
+The Chromium-only journey starts its own local server. The CI `quality` job
+uses Chromium's new headless mode, installs it with
+`npx playwright install --with-deps --no-shell chromium`, and runs
+the same browser tests alongside typecheck, lint, formatting, unit tests, and build.
+
+## Implementation boundaries
+
+`src/application/learning-session/` holds the committed semantic prediction and
+the existing unsafe session. React owns the form draft and renders derived views.
+Scheduling, Back, retained future and Reset delegate to `unsafe-session`; domain
+transitions and invariants remain in `src/domain/unsafe-reservation/`.
+Reset run preserves the prediction. Invariant violations remain in the unsafe lab;
+no later teaching flow is implemented yet.
 
 ## Contributing
 

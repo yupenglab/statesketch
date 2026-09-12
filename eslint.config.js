@@ -8,7 +8,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig([
   {
-    ignores: ['dist', 'coverage'],
+    ignores: ['dist', 'coverage', 'playwright-report', 'test-results'],
   },
   {
     files: ['**/*.{ts,tsx}'],
