@@ -286,6 +286,20 @@
 .tools button {
   font-size: 0.8rem;
 }
+.analysisEntry {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-accent-strong);
+  background: #f8e9e3;
+}
+.analysisEntry p {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.analysisEntry .primary {
+  width: 100%;
+}
 .lastStep {
   min-height: 6rem;
   font-size: 0.9rem;
@@ -354,6 +368,180 @@
   margin: 0.5rem 0;
   overflow-wrap: anywhere;
 }
+.analysis {
+  border-top: 1px solid var(--color-line);
+  padding: 2rem 0 1rem;
+}
+.analysisHeader {
+  max-width: 52rem;
+  margin-bottom: 1.5rem;
+}
+.analysisHeader h2 {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 4.25rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.analysisLead {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  color: var(--color-accent-strong);
+  font-size: clamp(1rem, 2vw, 1.3rem);
+  font-weight: 650;
+}
+.analysisGrid {
+  display: grid;
+  grid-template-columns: minmax(20rem, 0.9fr) minmax(24rem, 1.1fr);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+}
+.tracePanel,
+.evidencePanel,
+.checkpoint,
+.activeRunTools {
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+.evidencePanel {
+  border-left: 1px solid var(--color-line);
+}
+.causalTrace {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+}
+.causalTrace li {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 0.75rem;
+  padding: 1rem 0;
+  border-top: 1px solid var(--color-line);
+}
+.causalTrace .stepNumber {
+  grid-row: auto;
+  font-size: 1.15rem;
+}
+.causalTrace p {
+  margin: 0.35rem 0 0;
+  color: var(--color-ink-muted);
+  font-size: 0.8rem;
+}
+.evidencePanel > h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+.evidenceList {
+  margin: 1.25rem 0;
+}
+.evidenceList > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 0.7fr) 1.3fr;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--color-line);
+}
+.evidenceList dt {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+.evidenceList dd {
+  margin: 0;
+  font-size: 0.85rem;
+}
+.staleEvidence,
+.causalSummary {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-left: 0.25rem solid var(--color-accent);
+  background: #f6f2e8;
+}
+.staleEvidence h3,
+.causalSummary h3 {
+  margin: 0 0 0.55rem;
+}
+.staleEvidence p,
+.causalSummary p {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+.checkpoint {
+  margin-top: 1rem;
+  border: 1px solid var(--color-line);
+  border-top: 0.25rem solid var(--color-ink);
+  background: var(--color-surface);
+}
+.checkpoint fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.checkpoint legend {
+  max-width: 50rem;
+  padding: 0;
+  font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+  font-weight: 650;
+}
+.checkpointOptions {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+.checkpointOption {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 3.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-line);
+  cursor: pointer;
+}
+.checkpointOption:has(input:checked) {
+  border-color: var(--color-ink);
+  background: #e3eae2;
+}
+.checkpointOption input {
+  flex: 0 0 auto;
+  width: 1.1rem;
+  height: 1.1rem;
+  accent-color: var(--color-ink);
+}
+.feedback {
+  max-width: 55rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-line);
+}
+.feedback h3,
+.feedback p {
+  margin: 0 0 0.5rem;
+}
+.feedback p {
+  line-height: 1.6;
+}
+.feedbackHint {
+  color: var(--color-ink-muted);
+  font-size: 0.8rem;
+}
+.activeRunTools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  border: 1px dashed var(--color-line);
+}
+.activeRunTools h3,
+.activeRunTools p,
+.activeRunTools .tools {
+  margin: 0;
+}
+.activeRunTools p {
+  color: var(--color-ink-muted);
+  font-size: 0.8rem;
+}
 .announcement {
   min-height: 3rem;
   font-size: 0.85rem;
@@ -378,6 +566,13 @@
   }
   .lastStep {
     min-height: 0;
+  }
+  .analysisGrid {
+    grid-template-columns: 1fr;
+  }
+  .evidencePanel {
+    border-top: 1px solid var(--color-line);
+    border-left: 0;
   }
 }
 @media (max-width: 48rem) {
@@ -427,5 +622,22 @@
   }
   .shell .run {
     font-size: 0.75rem;
+  }
+  .analysis {
+    padding-top: 1.5rem;
+  }
+  .analysisGrid {
+    display: block;
+  }
+  .evidenceList > div {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+  .checkpointOptions {
+    grid-template-columns: 1fr;
+  }
+  .activeRunTools {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

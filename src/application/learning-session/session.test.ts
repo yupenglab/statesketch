@@ -26,7 +26,18 @@ describe('learning session', () => {
     expect(next.unsafeSession).toBe(initial.unsafeSession);
     expect(initial.prediction).toBeNull();
     expect(Object.isFrozen(next.prediction)).toBe(true);
-    expect(Object.keys(next)).toEqual(['prediction', 'unsafeSession']);
+    expect(Object.keys(next)).toEqual([
+      'phase',
+      'prediction',
+      'unsafeSession',
+      'savedUnsafeTrace',
+      'checkpointAnswer',
+    ]);
+    expect(next).toMatchObject({
+      phase: 'UNSAFE_EXPLORATION',
+      savedUnsafeTrace: null,
+      checkpointAnswer: null,
+    });
   });
 
   it.each(['NO', 'YES', 'UNSURE'] as const)(

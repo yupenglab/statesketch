@@ -8,9 +8,12 @@ import {
 } from '../application/learning-session/session';
 import {
   deriveLearningSessionView,
+  deriveLearningViolationAnalysis,
   describeLearningInteraction,
   type LearningSessionView,
 } from '../application/learning-session/view';
+import type { ViolationAnalysis } from '../application/learning-session/analysis';
+import type { CheckpointAnswer } from '../application/learning-session/checkpoint';
 import { formatAnnouncement, formatStep } from './factual-copy';
 import styles from './App.module.css';
 
@@ -21,6 +24,10 @@ const predictionLabels: Record<PredictionChoice, string> = {
 };
 
 function focusLabHeading(node: HTMLHeadingElement | null) {
+  node?.focus();
+}
+
+function focusAnalysisHeading(node: HTMLHeadingElement | null) {
   node?.focus();
 }
 
@@ -188,10 +195,252 @@ function History({ view }: { view: LearningSessionView }) {
   );
 }
 
+const checkpointLabels: Readonly<Record<CheckpointAnswer, string>> = {
+  CHECK_ONLY: 'CHECK only',
+  COMMIT_ONLY: 'COMMIT only',
+  CHECK_TO_COMMIT: 'CHECK → COMMIT',
+  UNSURE: "I'm not sure",
+};
+
+function CausalCheckpoint({
+  submittedAnswer,
+  feedback,
+  onSubmit,
+}: {
+  submittedAnswer: CheckpointAnswer | null;
+  feedback: string | null;
+  onSubmit: (answer: CheckpointAnswer) => void;
+}) {
+  const [choice, setChoice] = useState<CheckpointAnswer | null>(
+    submittedAnswer,
+  );
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (choice !== null) onSubmit(choice);
+  }
+
+  return (
+    <section className={styles.checkpoint} aria-labelledby="checkpoint-title">
+      <p className={styles.eyebrow}>Causal checkpoint</p>
+      <form onSubmit={submit}>
+        <fieldset>
+          <legend id="checkpoint-title">
+            Which part must another reservation attempt not interrupt?
+          </legend>
+          <div className={styles.checkpointOptions}>
+            {(Object.keys(checkpointLabels) as CheckpointAnswer[]).map(
+              (answer) => (
+                <label key={answer} className={styles.checkpointOption}>
+                  <input
+                    type="radio"
+                    name="checkpoint"
+                    checked={choice === answer}
+                    onChange={() => setChoice(answer)}
+                  />
+                  {checkpointLabels[answer]}
+                </label>
+              ),
+            )}
+          </div>
+        </fieldset>
+        <button
+          type="submit"
+          className={styles.primary}
+          disabled={choice === null}
+        >
+          Check my reasoning
+        </button>
+      </form>
+      {feedback !== null && (
+        <div className={styles.feedback} aria-labelledby="feedback-title">
+          <h3 id="feedback-title">Feedback on your latest answer</h3>
+          <p>{feedback}</p>
+          <p className={styles.feedbackHint}>
+            You can change your choice and check it again.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ViolationAnalysisView({
+  analysis,
+  view,
+  checkpointAnswer,
+  onAction,
+}: {
+  analysis: ViolationAnalysis;
+  view: LearningSessionView;
+  checkpointAnswer: CheckpointAnswer | null;
+  onAction: (action: LearningSessionAction) => void;
+}) {
+  const stale = analysis.staleObservation;
+  return (
+    <section className={styles.analysis} aria-labelledby="analysis-title">
+      <header className={styles.analysisHeader}>
+        <p className={styles.eyebrow}>02 / Explain</p>
+        <h2 id="analysis-title" tabIndex={-1} ref={focusAnalysisHeading}>
+          Violation analysis
+        </h2>
+        <p className={styles.analysisLead}>
+          Two reservations succeeded for {analysis.originalSeats} original seat.
+          The invariant was violated.
+        </p>
+      </header>
+
+      <div className={styles.analysisGrid}>
+        <section
+          className={styles.tracePanel}
+          aria-labelledby="saved-trace-title"
+        >
+          <div className={styles.sectionHeading}>
+            <h3 id="saved-trace-title">What happened</h3>
+            <span>Saved first violation</span>
+          </div>
+          <p className={styles.historyHint}>
+            Ordered evidence replayed from your saved execution.
+          </p>
+          <ol
+            className={styles.causalTrace}
+            aria-label="Saved violating execution"
+          >
+            {analysis.steps.map((step) => (
+              <li key={step.stepNumber}>
+                <span className={styles.stepNumber}>{step.stepNumber}</span>
+                <div>
+                  <strong>
+                    Thread {step.threadId} — {step.operation}
+                  </strong>
+                  {step.successfulCheck && (
+                    <p>
+                      Successful CHECK · observed {step.observedSeatsRemaining}{' '}
+                      seat
+                    </p>
+                  )}
+                  {step.sharedStateChanged && (
+                    <p>
+                      Shared seats: {step.seatsRemainingBefore} →{' '}
+                      {step.seatsRemainingAfter}
+                    </p>
+                  )}
+                  {step.earlierObservationRetained && (
+                    <p>
+                      Earlier observation retained:{' '}
+                      {step.observedSeatsRemaining} seat
+                    </p>
+                  )}
+                  {step.invariantViolatedHere && <p>Invariant violated here</p>}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section
+          className={styles.evidencePanel}
+          aria-labelledby="evidence-title"
+        >
+          <p className={styles.eyebrow}>Critical evidence</p>
+          <h3 id="evidence-title">
+            An earlier result met a later shared state
+          </h3>
+          <dl className={styles.evidenceList}>
+            <div>
+              <dt>Both successful checks</dt>
+              <dd>
+                Steps{' '}
+                {analysis.successfulChecks
+                  .map((check) => check.stepNumber)
+                  .join(' and ')}
+                , before the first COMMIT
+              </dd>
+            </div>
+            <div>
+              <dt>First COMMIT</dt>
+              <dd>
+                Thread {analysis.firstCommit.threadId}, step{' '}
+                {analysis.firstCommit.stepNumber}:{' '}
+                {analysis.firstCommit.seatsRemainingBefore} →{' '}
+                {analysis.firstCommit.seatsRemainingAfter}
+              </dd>
+            </div>
+            <div>
+              <dt>Violating COMMIT</dt>
+              <dd>
+                Thread {analysis.violatingCommit.threadId}, step{' '}
+                {analysis.violatingCommit.stepNumber}:{' '}
+                {analysis.violatingCommit.seatsRemainingBefore} →{' '}
+                {analysis.violatingCommit.seatsRemainingAfter}
+              </dd>
+            </div>
+          </dl>
+          <div className={styles.staleEvidence}>
+            <h3>Earlier observation versus shared state</h3>
+            <p>
+              Thread {stale.threadId}&apos;s earlier CHECK saw{' '}
+              <strong>{stale.earlierObservedSeatsRemaining} seat</strong> and
+              passed. After Thread {stale.firstCommitterId} committed, the
+              shared value became{' '}
+              <strong>{stale.sharedSeatsAfterFirstCommit}</strong>, but Thread{' '}
+              {stale.threadId}&apos;s earlier observation remained the result
+              its next COMMIT depended on.
+            </p>
+          </div>
+          <div className={styles.causalSummary}>
+            <h3>Causal summary</h3>
+            <p>
+              Both reservation attempts completed a successful CHECK before
+              either conflicting reservation had finished. The later COMMIT
+              therefore acted on an earlier successful observation.
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <CausalCheckpoint
+        submittedAnswer={checkpointAnswer}
+        feedback={view.checkpointFeedback}
+        onSubmit={(answer) => onAction({ type: 'SUBMIT_CHECKPOINT', answer })}
+      />
+
+      <section
+        className={styles.activeRunTools}
+        aria-labelledby="active-run-title"
+      >
+        <div>
+          <h3 id="active-run-title">Current run controls</h3>
+          <p>
+            These controls affect the active timeline. The saved evidence above
+            stays frozen.
+          </p>
+        </div>
+        <div className={styles.tools}>
+          <button
+            type="button"
+            disabled={!view.canBack}
+            onClick={() => onAction({ type: 'BACK' })}
+          >
+            Back active run
+          </button>
+          <button type="button" onClick={() => onAction({ type: 'RESET_RUN' })}>
+            Reset current run
+          </button>
+        </div>
+      </section>
+    </section>
+  );
+}
+
 export function App() {
   const [session, setSession] = useState(createLearningSession);
   const [announcement, setAnnouncement] = useState('');
   const view = deriveLearningSessionView(session);
+  const analysis =
+    session.phase === 'VIOLATION_ANALYSIS'
+      ? deriveLearningViolationAnalysis(session)
+      : null;
   const lastStep = view.activeTransitionFacts.at(-1);
   function dispatch(action: LearningSessionAction) {
     const next = reduceLearningSession(session, action);
@@ -223,6 +472,13 @@ export function App() {
             onSubmit={(prediction) =>
               dispatch({ type: 'SUBMIT_PREDICTION', prediction })
             }
+          />
+        ) : analysis !== null ? (
+          <ViolationAnalysisView
+            analysis={analysis}
+            view={view}
+            checkpointAnswer={session.checkpointAnswer}
+            onAction={dispatch}
           />
         ) : (
           <>
@@ -301,6 +557,22 @@ export function App() {
                     Reset run
                   </button>
                 </div>
+                {view.canAnalyzeViolation && (
+                  <div className={styles.analysisEntry}>
+                    <p>
+                      The first violating execution is saved for causal review.
+                    </p>
+                    <button
+                      type="button"
+                      className={styles.primary}
+                      onClick={() =>
+                        dispatch({ type: 'ENTER_VIOLATION_ANALYSIS' })
+                      }
+                    >
+                      Analyze this result <span aria-hidden="true">→</span>
+                    </button>
+                  </div>
+                )}
               </section>
               <section
                 className={styles.reasoning}
