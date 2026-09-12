@@ -4,6 +4,8 @@ node_modules/
 # Build and test output
 dist/
 coverage/
+playwright-report/
+test-results/
 
 # Local environment files
 .env

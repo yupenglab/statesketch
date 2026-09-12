@@ -42,3 +42,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps --no-shell chromium
+
+      - name: Browser journey
+        run: npm run test:e2e
