@@ -1,0 +1,45 @@
+name: Learning and UX feedback
+description: Share confusion, unclear wording, difficult interactions, or surprising behavior.
+title: '[Learning / UX]: '
+body:
+  - type: markdown
+    attributes:
+      value: Feedback is welcome about misunderstanding, teaching-model assumptions, Compare comprehension, and accessibility or interaction friction. This form is not a claim that learning effectiveness has been validated.
+  - type: dropdown
+    id: location
+    attributes:
+      label: Where in the lab did this happen?
+      options:
+        - Prediction
+        - Unsafe exploration
+        - Violation analysis or checkpoint
+        - Synchronized exploration
+        - Compare
+        - Final insight
+        - Across the full journey
+    validations:
+      required: true
+  - type: textarea
+    id: interpretation
+    attributes:
+      label: What did you think the interface or concept meant?
+      description: Describe any confusion, misunderstanding, unclear wording, or surprising behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: What became clearer or remained unclear?
+      description: Include difficult interactions or teaching-model assumptions when relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: friction
+    attributes:
+      label: Accessibility or interaction friction
+      description: Optional details about keyboard, screen-reader, touch, zoom, or other interaction difficulty.
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      description: Optional environment details when relevant.
