@@ -36,6 +36,9 @@ function start() {
   fireEvent.click(screen.getByRole('radio', { name: 'COMMIT only' }));
   click('Check my reasoning');
   click('Try the synchronized version');
+  expect(
+    screen.getByText(/The scenario and reservation goal are unchanged/),
+  ).toBeVisible();
 }
 function region(id: 'A' | 'B') {
   return screen.getByRole('region', { name: `Thread ${id}` });
@@ -193,6 +196,14 @@ it('shows causal mixed-role Compare, readonly phases, prediction reflection, mod
   expect(
     screen.getByRole('region', { name: 'Protect CHECK → dependent COMMIT' }),
   ).toHaveTextContent('same mutex');
+  expect(
+    screen.getByRole('region', { name: 'Protect CHECK → dependent COMMIT' }),
+  ).toHaveTextContent(
+    'Threads A and B both completed successful CHECKs before the first COMMIT',
+  );
+  expect(
+    screen.getByRole('region', { name: 'Protect CHECK → dependent COMMIT' }),
+  ).toHaveTextContent('Thread A was blocked before CHECK by Thread B');
   const limits = screen.getByRole('region', {
     name: 'What this model does—and does not—show',
   });

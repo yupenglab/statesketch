@@ -500,8 +500,12 @@ export function App() {
           />
         ) : session.phase === 'FINAL_COMPARISON' && view.comparison !== null ? (
           <FinalComparison view={view.comparison} onAction={dispatch} />
-        ) : session.phase === 'FINAL_INSIGHT' ? (
-          <FinalInsight prediction={session.prediction} onAction={dispatch} />
+        ) : session.phase === 'FINAL_INSIGHT' && view.comparison !== null ? (
+          <FinalInsight
+            prediction={session.prediction}
+            comparison={view.comparison}
+            onAction={dispatch}
+          />
         ) : analysis !== null ? (
           <ViolationAnalysisView
             analysis={analysis}

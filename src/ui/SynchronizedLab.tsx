@@ -33,8 +33,9 @@ export function SynchronizedLab({
         </span>
       </header>
       <p>
-        Both reservation attempts use the same mutex around CHECK → dependent
-        COMMIT. Choose one thread to run one operation.
+        The scenario and reservation goal are unchanged. Both reservation
+        attempts use the same mutex around CHECK → dependent COMMIT. Choose one
+        thread to run one operation.
       </p>
       <div className={styles.lab}>
         <section className={styles.state} aria-labelledby="sync-state-title">

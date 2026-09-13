@@ -166,9 +166,11 @@ export function FinalComparison({
 
 export function FinalInsight({
   prediction,
+  comparison,
   onAction,
 }: {
   prediction: Prediction;
+  comparison: ComparisonView;
   onAction: Dispatch;
 }) {
   const labels = { NO: 'No', YES: 'Yes', UNSURE: "I'm not sure" };
@@ -206,6 +208,17 @@ export function FinalInsight({
           aria-labelledby="region-title"
         >
           <h3 id="region-title">Protect CHECK → dependent COMMIT</h3>
+          <p>
+            In your unsafe execution, Threads{' '}
+            {comparison.unsafe.successfulChecks
+              .map((check) => check.threadId)
+              .join(' and ')}{' '}
+            both completed successful CHECKs before the first COMMIT. Thread{' '}
+            {comparison.roles.unsafeViolatingCommitter}&apos;s later COMMIT
+            depended on that earlier observation. In your synchronized
+            execution, Thread {comparison.roles.blockedContender} was blocked
+            before CHECK by Thread {comparison.roles.blockingOwner}.
+          </p>
           <p>
             The mutex did not change the meaning of CHECK or COMMIT. It changed
             the reachable interleavings.
