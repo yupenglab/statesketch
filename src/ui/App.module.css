@@ -542,6 +542,53 @@
   color: var(--color-ink-muted);
   font-size: 0.8rem;
 }
+.comparisonGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+}
+.comparisonGrid > section {
+  min-width: 0;
+}
+.comparisonGrid p,
+.comparisonGrid li,
+.milestones dd {
+  line-height: 1.65;
+}
+.comparisonGrid summary {
+  cursor: pointer;
+  padding: 0.75rem 0;
+}
+.milestones > div {
+  border-top: 1px solid var(--color-line);
+  padding: 0.9rem 0;
+}
+.milestones dt {
+  font-weight: 650;
+}
+.milestones dd {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--color-ink-muted);
+}
+.mutex {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--color-line);
+  padding-top: 1rem;
+}
+.reflection {
+  overflow-wrap: anywhere;
+  margin-left: 0;
+}
+@media (max-width: 48rem) {
+  .comparisonGrid {
+    grid-template-columns: 1fr;
+  }
+  .synchronized .threads {
+    grid-template-columns: 1fr;
+  }
+}
 .announcement {
   min-height: 3rem;
   font-size: 0.85rem;

@@ -9,13 +9,38 @@ import { deriveUnsafeSessionView } from '../unsafe-session';
 import type { LearningSessionAction, LearningSessionState } from './session';
 import { deriveCheckpointFeedback } from './checkpoint';
 import { deriveViolationAnalysis, type ViolationAnalysis } from './analysis';
+import { deriveSynchronizedSessionView } from '../synchronized-session';
+import { deriveComparisonView } from './comparison';
 
 export function deriveLearningSessionView(session: LearningSessionState) {
   const timeline = deriveUnsafeSessionView(session.unsafeSession);
   const execution = timeline.currentExecution;
+  const synchronized =
+    session.synchronizedSession === null
+      ? null
+      : deriveSynchronizedSessionView(session.synchronizedSession);
   return {
     ...timeline,
     phase: session.phase,
+    synchronized,
+    canEnterSynchronized:
+      session.phase === 'VIOLATION_ANALYSIS' &&
+      session.prediction !== null &&
+      session.savedUnsafeTrace !== null &&
+      session.checkpointAnswer !== null,
+    canEnterFinalComparison:
+      session.phase === 'SYNCHRONIZED_EXPLORATION' &&
+      session.savedUnsafeTrace !== null &&
+      synchronized !== null &&
+      synchronized.executionComplete &&
+      synchronized.hasBlockedLockAttempt,
+    comparison:
+      session.phase === 'FINAL_COMPARISON' || session.phase === 'FINAL_INSIGHT'
+        ? deriveComparisonView(
+            session.savedUnsafeTrace,
+            session.synchronizedSession,
+          )
+        : null,
     canAnalyzeViolation:
       session.phase === 'UNSAFE_EXPLORATION' &&
       session.savedUnsafeTrace !== null,
@@ -63,9 +88,21 @@ export function describeLearningInteraction(
       previous.unsafeSession.schedulerChoices.length &&
     previous.unsafeSession.schedulerChoices[previous.unsafeSession.cursor] !==
       action.threadId;
+  const syncReplaced =
+    action.type === 'SCHEDULE_SYNCHRONIZED_THREAD' &&
+    previous.synchronizedSession !== null &&
+    previous.synchronizedSession.cursor <
+      previous.synchronizedSession.schedulerChoices.length &&
+    previous.synchronizedSession.schedulerChoices[
+      previous.synchronizedSession.cursor
+    ] !== action.threadId;
 
   return {
     type: action.type,
+    synchronized: view.synchronized,
+    synchronizedBranchPoint: syncReplaced
+      ? (previous.synchronizedSession?.cursor ?? null)
+      : null,
     currentStep: view.currentStep,
     branchPoint: replacedFuture ? previous.unsafeSession.cursor : null,
     lastStep: view.activeTransitionFacts.at(-1),

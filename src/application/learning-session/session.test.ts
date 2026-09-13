@@ -32,6 +32,7 @@ describe('learning session', () => {
       'unsafeSession',
       'savedUnsafeTrace',
       'checkpointAnswer',
+      'synchronizedSession',
     ]);
     expect(next).toMatchObject({
       phase: 'UNSAFE_EXPLORATION',
