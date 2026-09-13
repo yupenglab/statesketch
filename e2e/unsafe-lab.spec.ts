@@ -30,8 +30,38 @@ test('keyboard prediction, unsafe schedule, retained future, alternate continuat
   await expect(
     page.getByRole('heading', { name: 'Unsafe exploration' }),
   ).toBeFocused();
+  await expect(
+    page.getByRole('region', { name: 'Your prediction' }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByText(
+      'Each click advances one conceptual step in this teaching model.',
+    ),
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'You are choosing a possible execution ordering, not simulating a complete OS scheduler.',
+    ),
+  ).toBeVisible();
   const state = page.getByRole('region', { name: 'Current shared state' });
   const history = page.getByRole('region', { name: 'Execution history' });
+  await page.keyboard.press('Tab');
+  const disclosure = page.getByText('More about this teaching model');
+  await expect(disclosure).toBeFocused();
+  expect(
+    await disclosure.evaluate((summary) =>
+      summary.parentElement?.hasAttribute('open'),
+    ),
+  ).toBe(false);
+  await page.keyboard.press('Enter');
+  expect(
+    await disclosure.evaluate((summary) =>
+      summary.parentElement?.hasAttribute('open'),
+    ),
+  ).toBe(true);
+  await expect(
+    page.getByText(/Conceptual steps are not CPU instructions/),
+  ).toBeVisible();
   await page.keyboard.press('Tab');
   await expect(
     page.getByRole('button', { name: 'Run Thread A next: CHECK' }),
@@ -113,7 +143,10 @@ test('keyboard prediction, unsafe schedule, retained future, alternate continuat
   await expect(history.getByRole('listitem')).toHaveCount(0);
   await expect(
     page.getByRole('region', { name: 'Your prediction' }),
-  ).toContainText('Both might check before a reservation.');
+  ).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText(
+    'Your prediction is unchanged.',
+  );
   await expect(page.getByRole('status')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

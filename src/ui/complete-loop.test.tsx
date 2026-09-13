@@ -51,6 +51,9 @@ it('renders actual blocking, owner progress, wake without ownership, explicit re
       screen.getByRole('heading', { name: 'Synchronized exploration' }),
     ).toHaveFocus();
     expect(
+      screen.queryByText('More about this teaching model'),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getByText(
         'No execution steps yet. The mutex is free; both threads begin at LOCK.',
       ),

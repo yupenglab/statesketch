@@ -18,6 +18,7 @@ import { formatAnnouncement, formatStep } from './factual-copy';
 import styles from './App.module.css';
 import { SynchronizedLab } from './SynchronizedLab';
 import { FinalComparison, FinalInsight } from './FinalReflection';
+import { TeachingModelDisclosure } from './TeachingModelDisclosure';
 
 const predictionLabels: Record<PredictionChoice, string> = {
   NO: 'No',
@@ -270,11 +271,13 @@ function CausalCheckpoint({
 function ViolationAnalysisView({
   analysis,
   view,
+  prediction,
   checkpointAnswer,
   onAction,
 }: {
   analysis: ViolationAnalysis;
   view: LearningSessionView;
+  prediction: Prediction;
   checkpointAnswer: CheckpointAnswer | null;
   onAction: (action: LearningSessionAction) => void;
 }) {
@@ -401,6 +404,16 @@ function ViolationAnalysisView({
         </section>
       </div>
 
+      <section
+        className={styles.predictionReflection}
+        aria-labelledby="analysis-prediction-title"
+      >
+        <p className={styles.eyebrow}>Reflection</p>
+        <h3 id="analysis-prediction-title">Your initial prediction</h3>
+        <p>{predictionLabels[prediction.choice]}</p>
+        {prediction.reasoning && <p>{prediction.reasoning}</p>}
+      </section>
+
       <CausalCheckpoint
         submittedAnswer={checkpointAnswer}
         feedback={view.checkpointFeedback}
@@ -511,6 +524,7 @@ export function App() {
             analysis={analysis}
             view={view}
             checkpointAnswer={session.checkpointAnswer}
+            prediction={session.prediction}
             onAction={dispatch}
           />
         ) : (
@@ -560,6 +574,7 @@ export function App() {
                 <p className={styles.eyebrow}>Control</p>
                 <h3 id="control-title">Choose the next thread</h3>
                 <p className={styles.hint}>One action runs one operation.</p>
+                <TeachingModelDisclosure />
                 <div className={styles.threads}>
                   {view.threads.map((thread) => (
                     <ThreadCard
@@ -619,16 +634,6 @@ export function App() {
                     : 'No execution steps yet. Choose a thread to begin.'}
                 </p>
                 <History view={view} />
-                <section
-                  className={styles.savedPrediction}
-                  aria-labelledby="saved-prediction-title"
-                >
-                  <h3 id="saved-prediction-title">Your prediction</h3>
-                  <p>{predictionLabels[session.prediction.choice]}</p>
-                  {session.prediction.reasoning && (
-                    <p>{session.prediction.reasoning}</p>
-                  )}
-                </section>
               </section>
             </div>
           </>

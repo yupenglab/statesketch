@@ -12,7 +12,10 @@ Run the local development server to explore the pre-alpha Last Seat Reservation 
 
 StateSketch is an experimental interactive CS learning project where learners control execution order and inspect how shared state changes step by step.
 
-The project currently plans exactly one prototype scenario: **Last Seat Reservation / Check-Then-Act Atomicity**.
+The project currently contains exactly one prototype scenario: **Last Seat Reservation / Check-Then-Act Atomicity**.
+
+StateSketch keeps the current learning session in memory only. Refreshing the
+page starts a fresh session.
 
 ## Prototype
 
