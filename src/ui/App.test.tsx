@@ -89,9 +89,13 @@ describe('prediction', () => {
       type: 'SUBMIT_PREDICTION',
       prediction: { choice: 'YES', reasoning: 'They may both see one.' },
     });
+    expect(reduce.mock.results[0]?.value.prediction).toEqual({
+      choice: 'YES',
+      reasoning: 'They may both see one.',
+    });
     expect(
-      screen.getByRole('region', { name: 'Your prediction' }),
-    ).toHaveTextContent('YesThey may both see one.');
+      screen.queryByRole('region', { name: 'Your prediction' }),
+    ).not.toBeInTheDocument();
   });
   it('starts without reasoning and shows both derived CHECK controls at cursor zero', () => {
     start();
@@ -107,18 +111,23 @@ describe('prediction', () => {
     expect(history().getByText('Initial state · Current')).toBeVisible();
   });
   it('preserves prediction and reasoning across schedule, Back, alternate choice and Reset', () => {
+    const reduce = vi.spyOn(learning, 'reduceLearningSession');
     start('My initial thought.');
     run('A');
     run('B');
     back();
     run('A');
     expect(
-      screen.getByRole('region', { name: 'Your prediction' }),
-    ).toHaveTextContent("I'm not sureMy initial thought.");
+      screen.queryByRole('region', { name: 'Your prediction' }),
+    ).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Reset run' }));
+    expect(reduce.mock.results.at(-1)?.value.prediction).toEqual({
+      choice: 'UNSURE',
+      reasoning: 'My initial thought.',
+    });
     expect(
-      screen.getByRole('region', { name: 'Your prediction' }),
-    ).toHaveTextContent("I'm not sureMy initial thought.");
+      screen.queryByRole('region', { name: 'Your prediction' }),
+    ).not.toBeInTheDocument();
     expect(history().queryAllByRole('listitem')).toHaveLength(0);
     expect(history().getByText('Initial state · Current')).toBeVisible();
     expect(shared().getByText('1', { exact: true })).toBeVisible();
@@ -129,6 +138,43 @@ describe('prediction', () => {
 });
 
 describe('unsafe exploration', () => {
+  it('places a native, collapsed teaching-model disclosure before the thread controls without another live region', () => {
+    start();
+    const first = screen.getByText(
+      'Each click advances one conceptual step in this teaching model.',
+    );
+    const second = screen.getByText(
+      'You are choosing a possible execution ordering, not simulating a complete OS scheduler.',
+    );
+    const summary = screen.getByText('More about this teaching model');
+    const details = summary.closest('details');
+    expect(first).toBeVisible();
+    expect(second).toBeVisible();
+    expect(summary.tagName).toBe('SUMMARY');
+    expect(details).not.toHaveAttribute('open');
+    expect(
+      screen.getByText(/Conceptual steps are not CPU instructions/),
+    ).not.toBeVisible();
+    fireEvent.click(summary);
+    expect(details).toHaveAttribute('open');
+    expect(details).toHaveTextContent(
+      'Sequential consistency is a teaching simplification',
+    );
+    expect(details).toHaveTextContent(
+      'concurrency is not identical to physical parallel execution',
+    );
+    expect(details).toHaveTextContent('language-neutral model');
+    expect(details).toHaveTextContent(
+      'does not represent C or C++ data-race or memory-model semantics',
+    );
+    expect(
+      first.compareDocumentPosition(
+        screen.getByRole('region', { name: 'Thread A' }),
+      ) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(document.querySelectorAll('[aria-live]')).toHaveLength(1);
+  });
+
   it('dispatches exactly one thread-only scheduling action per activation', () => {
     const reduce = vi.spyOn(learning, 'reduceLearningSession');
     start();
@@ -332,6 +378,41 @@ describe('history and accessibility', () => {
 });
 
 describe('violation analysis and causal checkpoint', () => {
+  it('restores the committed prediction as non-scoring reflection after evidence and before the checkpoint', () => {
+    start('Both checks might retain the same observation.');
+    violate();
+    analyze();
+    const reflection = screen.getByRole('region', {
+      name: 'Your initial prediction',
+    });
+    const evidence = screen
+      .getByRole('heading', {
+        name: 'Earlier observation versus shared state',
+      })
+      .closest('div');
+    const checkpoint = screen.getByRole('region', {
+      name: 'Which part must another reservation attempt not interrupt?',
+    });
+    expect(evidence).not.toBeNull();
+    expect(reflection).toHaveTextContent("I'm not sure");
+    expect(reflection).toHaveTextContent(
+      'Both checks might retain the same observation.',
+    );
+    expect(document.body).not.toHaveTextContent(
+      /prediction score|correct prediction|incorrect prediction/i,
+    );
+    expect(
+      evidence!.compareDocumentPosition(reflection) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      reflection.compareDocumentPosition(checkpoint) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(reflection).not.toHaveFocus();
+    expect(document.querySelectorAll('[aria-live]')).toHaveLength(1);
+  });
+
   it('offers analysis only after a real violation and enters it explicitly', () => {
     start();
     run('A');

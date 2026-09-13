@@ -63,6 +63,14 @@ test('narrow Chromium explains the saved violation and preserves it through chec
   await expect(stale).toContainText(
     'After Thread A committed, the shared value became 0',
   );
+  const reflection = page.getByRole('region', {
+    name: 'Your initial prediction',
+  });
+  await expect(reflection).toContainText('Yes');
+  await expect(reflection).toContainText(
+    'Both checks may pass before either commit.',
+  );
+  await expect(reflection).not.toContainText(/correct|incorrect|score/i);
   const savedEvidence = await trace.textContent();
 
   const checkpoint = page.getByRole('group', {

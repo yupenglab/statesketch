@@ -227,6 +227,30 @@
 .hint {
   margin: 0.35rem 0 1.25rem;
 }
+.teachingModel {
+  margin: -0.35rem 0 1.25rem;
+  padding: 0.85rem 1rem;
+  border-left: 0.2rem solid var(--color-accent);
+  background: #f6f2e8;
+}
+.teachingModel p {
+  margin: 0 0 0.45rem;
+}
+.teachingModel p {
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+.teachingModel summary {
+  width: fit-content;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+.teachingModel details p {
+  margin: 0.55rem 0 0;
+  color: var(--color-ink-muted);
+}
 .threads {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -358,14 +382,17 @@
   font-size: 0.8rem;
   font-weight: 600;
 }
-.savedPrediction {
-  border-top: 1px solid var(--color-line);
-  margin-top: 1.2rem;
-  padding-top: 1rem;
+.predictionReflection {
+  margin-top: 1rem;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
 }
-.savedPrediction p {
-  font-size: 0.85rem;
-  margin: 0.5rem 0;
+.predictionReflection h3,
+.predictionReflection p:not(.eyebrow) {
+  margin: 0 0 0.5rem;
+}
+.predictionReflection p {
   overflow-wrap: anywhere;
 }
 .analysis {
@@ -601,6 +628,32 @@
   padding: 1rem 0 1.5rem;
   font-size: 0.75rem;
   color: var(--color-ink-muted);
+}
+.fatalError {
+  max-width: 42rem;
+  margin: clamp(2rem, 10vh, 7rem) auto;
+  padding: clamp(1.25rem, 5vw, 3rem);
+  border: 1px solid var(--color-line);
+  border-top: 0.3rem solid var(--color-accent-strong);
+  background: var(--color-surface);
+}
+.fatalError h1 {
+  margin: 0 0 1rem;
+  font-size: clamp(2rem, 7vw, 4rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+.fatalError p {
+  margin: 0 0 1.5rem;
+}
+.fatalError button {
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-surface);
+  cursor: pointer;
+  font-weight: 650;
 }
 @media (max-width: 75rem) {
   .lab {
