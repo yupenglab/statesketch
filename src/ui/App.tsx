@@ -16,6 +16,8 @@ import type { ViolationAnalysis } from '../application/learning-session/analysis
 import type { CheckpointAnswer } from '../application/learning-session/checkpoint';
 import { formatAnnouncement, formatStep } from './factual-copy';
 import styles from './App.module.css';
+import { SynchronizedLab } from './SynchronizedLab';
+import { FinalComparison, FinalInsight } from './FinalReflection';
 
 const predictionLabels: Record<PredictionChoice, string> = {
   NO: 'No',
@@ -47,7 +49,7 @@ function PredictionForm({
       <p className={styles.eyebrow}>01 / Predict</p>
       <form onSubmit={submit}>
         <fieldset>
-          <legend id="prediction-title">
+          <legend id="prediction-title" tabIndex={-1} ref={focusLabHeading}>
             One seat is left. Thread A and Thread B both try to reserve it.
             Could both reservations succeed?
           </legend>
@@ -405,6 +407,22 @@ function ViolationAnalysisView({
         onSubmit={(answer) => onAction({ type: 'SUBMIT_CHECKPOINT', answer })}
       />
 
+      {view.canEnterSynchronized && (
+        <div className={styles.startRow}>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => onAction({ type: 'ENTER_SYNCHRONIZED_EXPLORATION' })}
+          >
+            Try the synchronized version
+          </button>
+          <p>
+            Your prediction, saved unsafe evidence and latest checkpoint answer
+            stay with you.
+          </p>
+        </div>
+      )}
+
       <section
         className={styles.activeRunTools}
         aria-labelledby="active-run-title"
@@ -472,6 +490,21 @@ export function App() {
             onSubmit={(prediction) =>
               dispatch({ type: 'SUBMIT_PREDICTION', prediction })
             }
+          />
+        ) : session.phase === 'SYNCHRONIZED_EXPLORATION' &&
+          view.synchronized !== null ? (
+          <SynchronizedLab
+            view={view.synchronized}
+            canCompare={view.canEnterFinalComparison}
+            onAction={dispatch}
+          />
+        ) : session.phase === 'FINAL_COMPARISON' && view.comparison !== null ? (
+          <FinalComparison view={view.comparison} onAction={dispatch} />
+        ) : session.phase === 'FINAL_INSIGHT' && view.comparison !== null ? (
+          <FinalInsight
+            prediction={session.prediction}
+            comparison={view.comparison}
+            onAction={dispatch}
           />
         ) : analysis !== null ? (
           <ViolationAnalysisView

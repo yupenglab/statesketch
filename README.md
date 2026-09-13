@@ -20,7 +20,13 @@ The planned learning sequence is:
 
 **Predict → Schedule → Observe → Explain → Compare**
 
-Prediction, unsafe scheduling, and violation analysis are implemented. The lab includes state inspection, Back, retained future, alternate scheduling, Reset run, a saved first-violation trace, and a causal checkpoint. Compare remains deferred.
+Prediction, unsafe scheduling, violation analysis, synchronized exploration,
+causal Compare, and Final Insight are implemented. Both explorations include
+state inspection, Back, retained future, alternate scheduling, and run Reset.
+After reviewing a saved first violation and submitting a causal checkpoint,
+learners explicitly try the synchronized version. Compare requires a completed
+synchronized execution with a real blocked LOCK attempt; a safe run without
+contention remains valid and can be revisited with Back or Reset.
 
 ## Why this exists
 
@@ -37,7 +43,7 @@ Concurrency beginners often find it difficult to reason about interleavings and 
 
 ## Current Status
 
-- **Prototype:** Pre-alpha / Predict + Unsafe Lab + Violation Analysis
+- **Prototype:** Pre-alpha / Complete Last Seat Reservation learning loop
 - **Human Validation:** Deferred / not completed
 - **Learning Effectiveness:** Open
 
@@ -83,8 +89,26 @@ explicit learner action after a real violation.
 LOCK, CHECK, COMMIT and explicit UNLOCK. A contended LOCK records a blocked attempt
 before CHECK; UNLOCK wakes the waiter without transferring ownership. Its tests
 traverse every legal schedule and prefix through the domain's runnable selector.
-This domain has no application/session or UI integration. Synchronized learner UI
-and Compare remain deferred.
+
+`src/application/synchronized-session/` stores only `schedulerChoices + cursor`.
+All execution state, operation facts, eligibility and history derive from replay
+of the applied prefix. Back retains future choices, matching choices reuse them,
+and a different legal choice replaces only the abandoned future. Reset affects
+only the synchronized timeline and preserves earlier learning artifacts.
+
+Compare derives its unsafe evidence exclusively from `SavedUnsafeTrace` and its
+synchronized evidence from the current completed synchronized session. Milestones
+are aligned by causal roles, not matching step indices or fixed thread identities.
+The comparison and insight phases disallow timeline controls; there is no second
+saved synchronized trace. Final Insight reflects on the initial prediction and
+explains the same-mutex CHECK → dependent COMMIT region and model limitations.
+Only Final Insight offers Start over, which clears the entire learning session.
+
+The single `quality` check includes exhaustive synchronized timeline/cursor tests,
+mixed-role comparison tests, component coverage for blocking and no-block runs,
+the three earlier browser journeys, and one complete Chromium learning-loop
+journey. There are no new dependencies, persistence, deployment, or Public Alpha
+release changes.
 
 ## Contributing
 

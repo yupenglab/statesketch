@@ -223,6 +223,7 @@ describe('causal checkpoint and analysis progress', () => {
       'unsafeSession',
       'savedUnsafeTrace',
       'checkpointAnswer',
+      'synchronizedSession',
     ]);
     expect(() =>
       reduceLearningSession(state, {
