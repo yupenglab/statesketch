@@ -77,8 +77,14 @@ causal analysis. React owns form drafts and renders derived views. Scheduling,
 Back, retained future and Reset delegate to `unsafe-session`; domain transitions
 and invariants remain in `src/domain/unsafe-reservation/`. Reset preserves the
 prediction, saved violation evidence, and latest checkpoint answer. Analysis is an
-explicit learner action after a real violation. Synchronization and Compare are not
-implemented.
+explicit learner action after a real violation.
+
+`src/domain/synchronized-reservation/` is a separate, deterministic domain for
+LOCK, CHECK, COMMIT and explicit UNLOCK. A contended LOCK records a blocked attempt
+before CHECK; UNLOCK wakes the waiter without transferring ownership. Its tests
+traverse every legal schedule and prefix through the domain's runnable selector.
+This domain has no application/session or UI integration. Synchronized learner UI
+and Compare remain deferred.
 
 ## Contributing
 
